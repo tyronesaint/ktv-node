@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>洛雪音乐音源测试 - Node.js 版本</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+      padding: 25px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border: 2px solid #e9ecef;
+    }
+
+    .section h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .result-box {
+      background: #fff;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .result-box.success {
+      border-color: #28a745;
+      background: #d4edda;
+    }
+
+    .result-box.error {
+      border-color: #dc3545;
+      background: #f8d7da;
+    }
+
+    .result-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .result-content a {
+      color: #667eea;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .result-content a:hover {
+      text-decoration: underline;
+    }
+
+    .info-box {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #0c5460;
+    }
+
+    .log-box {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .log-entry.error {
+      color: #ff6b6b;
+    }
+
+    .log-entry.success {
+      color: #51cf66;
+    }
+
+    .log-entry.info {
+      color: #4dabf7;
+    }
+
+    .log-entry.warning {
+      color: #ffd43b;
+    }
+
+    .loading {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .search-results {
+      margin-top: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .song-item {
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .song-item:hover {
+      border-color: #667eea;
+      background: #f8f9fa;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .song-item.selected {
+      border-color: #28a745;
+      background: #d4edda;
+    }
+
+    .song-title {
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .song-artist {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .song-info {
+      color: #999;
+      font-size: 12px;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .search-box input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎵 洛雪音乐音源测试工具</h1>
+      <p>Node.js 版本 | 支持搜索 | 无跨域问题</p>
+    </div>
+
+    <div class="content">
+      <div class="info-box">
+        <strong>✅ 使用方法：</strong> 搜索歌曲 → 点击结果 → 获取链接<br>
+        <strong>🎵 酷我音乐（kw）</strong>：无需加载脚本，直接搜索获取即可！<br>
+        <strong>🎶 网易云音乐（wy）</strong>：需要先加载脚本，才能搜索和获取链接
+      </div>
+
+      <div class="section">
+        <h2>1. 加载音源脚本（可选，酷我音乐无需加载）</h2>
+        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 14px; color: #856404;">
+          <strong>💡 提示：</strong><br>
+          - <strong>酷我音乐（kw）</strong>：无需加载脚本，直接搜索获取即可！<br>
+          - <strong>网易云音乐（wy）</strong>：必须先加载脚本，否则搜索和获取链接会失败！<br>
+          - 加载脚本需要访问 GitHub，可能需要几秒钟
+        </div>
+
+        <label>脚本 URL：</label>
+        <input type="text" id="scriptUrl" value="https://ghproxy.net/https://raw.githubusercontent.com/pdone/lx-music-source/main/ikun/latest.js">
+
+        <div>
+          <button onclick="loadScript()" id="loadBtn">📥 加载脚本</button>
+          <button onclick="clearLogs()" style="background: #6c757d;">🧹 清空日志</button>
+        </div>
+
+        <div id="loadResult" class="result-box"></div>
+      </div>
+
+      <div class="section">
+        <h2>2. 搜索歌曲</h2>
+
+        <label>选择音源：</label>
+        <select id="searchSource">
+          <option value="kw">kw - 酷我音乐</option>
+          <option value="wy">wy - 网易云音乐</option>
+          <option value="git">git - Git Music</option>
+        </select>
+
+        <label>搜索关键词（歌曲名/歌手）：</label>
+        <div class="search-box">
+          <input type="text" id="searchKeyword" placeholder="例如: 薛之谦 演员" value="">
+          <button onclick="searchSong()" id="searchBtn">🔍 搜索</button>
+        </div>
+
+        <div id="searchResults" class="search-results"></div>
+      </div>
+
+      <div class="section">
+        <h2>3. 获取播放链接</h2>
+
+        <label>当前选择：</label>
+        <div id="selectedSong" style="padding: 15px; background: #e9ecef; border-radius: 8px; margin-bottom: 15px;">
+          <span style="color: #999;">请先从搜索结果中选择一首歌曲</span>
+        </div>
+
+        <label>音质：</label>
+        <select id="quality">
+          <option value="128k">128k</option>
+          <option value="320k">320k</option>
+          <option value="flac">FLAC</option>
+        </select>
+
+        <div>
+          <button onclick="getMusicUrl()" id="getUrlBtn" disabled>🎵 获取链接</button>
+        </div>
+
+        <div id="urlResult" class="result-box"></div>
+      </div>
+
+      <div class="section">
+        <h2>4. 调试日志</h2>
+        <div id="logBox" class="log-box">
+          <div class="log-entry info">📋 日志系统已就绪</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedSongData = null;
+
+    // 日志系统
+    function log(message, type = 'info') {
+      const logBox = document.getElementById('logBox');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const timestamp = new Date().toLocaleTimeString('zh-CN');
+      entry.textContent = `[${timestamp}] ${message}`;
+      logBox.appendChild(entry);
+      logBox.scrollTop = logBox.scrollHeight;
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+
+    function clearLogs() {
+      const logBox = document.getElementById('logBox');
+      logBox.innerHTML = '<div class="log-entry info">📋 日志已清空</div>';
+    }
+
+    // 工具函数
+    function setButtonState(buttonId, loading, originalText) {
+      const btn = document.getElementById(buttonId);
+      if (loading) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="loading">⏳</span> 处理中...`;
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    function showResult(resultId, success, title, content) {
+      const resultDiv = document.getElementById(resultId);
+      resultDiv.style.display = 'block';
+      resultDiv.className = `result-box ${success ? 'success' : 'error'}`;
+      resultDiv.innerHTML = `
+        <div class="result-title">${success ? '✅' : '❌'} ${title}</div>
+        <div class="result-content">${content}</div>
+      `;
+    }
+
+    // 超时封装的 fetch
+    async function fetchWithTimeout(url, options, timeout = 30000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('请求超时（30秒），请检查网络或稍后重试');
+        }
+        throw error;
+      }
+    }
+
+    // 加载脚本
+    async function loadScript() {
+      log('开始加载音源脚本...', 'info');
+
+      const url = document.getElementById('scriptUrl').value.trim();
+
+      if (!url) {
+        log('❌ 错误：请输入脚本 URL', 'error');
+        alert('请输入脚本 URL');
+        return;
+      }
+
+      log(`📥 请求 URL: ${url}`, 'info');
+      setButtonState('loadBtn', true, '📥 加载脚本');
+      document.getElementById('loadResult').style.display = 'none';
+
+      try {
+        const response = await fetchWithTimeout('/api/load', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        }, 60000);
+
+        log(`📊 收到响应，状态码: ${response.status}`, 'info');
+
+        if (!response.ok) {
+          throw new Error(`HTTP 错误: ${response.status}`);
+        }
+
+        const data = await response.json();
+        log(`📦 响应数据: ${JSON.stringify(data, null, 2)}`, 'info');
+
+        if (data.success) {
+          log('✅ 脚本加载成功！', 'success');
+
+          let sourcesInfo = '';
+          if (data.data && data.data.sources) {
+            sourcesInfo = '<br><br><strong>支持的音源：</strong><br>';
+            for (const [key, value] of Object.entries(data.data.sources)) {
+              sourcesInfo += `- ${key}: ${value.actions.join(', ')} (${value.qualitys.join(', ')})<br>`;
+            }
+
+            // 更新音源列表
+            const searchSource = document.getElementById('searchSource');
+            searchSource.innerHTML = '';
+            for (const [key, value] of Object.entries(data.data.sources)) {
+              const option = document.createElement('option');
+              option.value = key;
+              option.textContent = `${key} - ${value.actions.join(', ')}`;
+              searchSource.appendChild(option);
+            }
+            log(`📋 已更新音源列表`, 'info');
+          }
+
+          showResult('loadResult', true, '脚本加载成功',
+            `初始化状态: ✅ 正常${sourcesInfo}`
+          );
+        } else {
+          log(`❌ 脚本加载失败: ${data.error}`, 'error');
+          showResult('loadResult', false, '脚本加载失败',
+            `错误信息: ${data.error || '未知错误'}`
+          );
+        }
+
+      } catch (error) {
+        log(`❌ 请求失败: ${error.message}`, 'error');
+        showResult('loadResult', false, '请求失败',
+          `<strong>错误详情:</strong><br>${error.message}`
+        );
+      } finally {
+        setButtonState('loadBtn', false, '📥 加载脚本');
+      }
+    }
+
+    // 搜索歌曲
+    async function searchSong() {
+      log('开始搜索歌曲...', 'info');
+
+      const keyword = document.getElementById('searchKeyword').value.trim();
+      const source = document.getElementById('searchSource').value;
+
+      if (!keyword) {
+        log('❌ 错误：请输入搜索关键词', 'error');
+        alert('请输入搜索关键词');
+        return;
+      }
+
+      log(`🔍 搜索关键词: ${keyword}`, 'info');
+      log(`📋 音源: ${source}`, 'info');
+
+      setButtonState('searchBtn', true, '🔍 搜索');
+      document.getElementById('searchResults').innerHTML = '';
+
+      try {
+        const response = await fetchWithTimeout('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keyword, source })
+        }, 30000);
+
+        log(`📊 收到响应，状态码: ${response.status}`, 'info');
+
+        if (!response.ok) {
+          throw new Error(`HTTP 错误: ${response.status}`);
+        }
+
+        const data = await response.json();
+        log(`📦 响应数据`, 'info');
+
+        if (data.success && data.data && data.data.length > 0) {
+          log(`✅ 搜索成功，找到 ${data.data.length} 首歌曲`, 'success');
+
+          const resultsDiv = document.getElementById('searchResults');
+          resultsDiv.innerHTML = '';
+
+          data.data.forEach((song, index) => {
+            const item = document.createElement('div');
+            item.className = 'song-item';
+            item.innerHTML = `
+              <div class="song-title">${song.name || '未知'}</div>
+              <div class="song-artist">${song.singer || '未知歌手'}</div>
+              <div class="song-info">ID: ${song.songmid || song.id || 'N/A'}</div>
+            `;
+
+            item.onclick = () => selectSong(song, item);
+            resultsDiv.appendChild(item);
+          });
+
+        } else {
+          log('❌ 没有找到匹配的歌曲', 'error');
+          const resultsDiv = document.getElementById('searchResults');
+          resultsDiv.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">没有找到匹配的歌曲</div>';
+        }
+
+      } catch (error) {
+        log(`❌ 搜索失败: ${error.message}`, 'error');
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = `<div style="text-align: center; color: #dc3545; padding: 20px;">搜索失败: ${error.message}</div>`;
+      } finally {
+        setButtonState('searchBtn', false, '🔍 搜索');
+      }
+    }
+
+    // 选择歌曲
+    function selectSong(song, element) {
+      log(`📌 选择歌曲: ${song.name} - ${song.singer}`, 'info');
+
+      // 移除其他选中状态
+      document.querySelectorAll('.song-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+
+      // 添加选中状态
+      element.classList.add('selected');
+
+      // 保存选中数据
+      selectedSongData = song;
+
+      // 显示选中信息
+      const selectedDiv = document.getElementById('selectedSong');
+      selectedDiv.innerHTML = `
+        <div style="font-weight: 600; font-size: 16px; color: #333;">${song.name || '未知'}</div>
+        <div style="color: #666; font-size: 14px;">${song.singer || '未知歌手'}</div>
+        <div style="color: #999; font-size: 12px; margin-top: 5px;">ID: ${song.songmid || song.id || 'N/A'}</div>
+      `;
+
+      // 启用获取链接按钮
+      document.getElementById('getUrlBtn').disabled = false;
+    }
+
+    // 获取音乐链接
+    async function getMusicUrl() {
+      log('开始获取音乐链接...', 'info');
+
+      if (!selectedSongData) {
+        log('❌ 错误：请先选择一首歌曲', 'error');
+        alert('请先选择一首歌曲');
+        return;
+      }
+
+      const source = document.getElementById('searchSource').value;
+      const quality = document.getElementById('quality').value;
+
+      const songmid = selectedSongData.songmid || selectedSongData.id;
+      const songName = selectedSongData.name;
+      const singer = selectedSongData.singer;
+
+      log(`📋 请求参数:`, 'info');
+      log(`  - 音源: ${source}`, 'info');
+      log(`  - 歌曲ID: ${songmid}`, 'info');
+      log(`  - 歌曲名: ${songName}`, 'info');
+      log(`  - 歌手: ${singer}`, 'info');
+      log(`  - 音质: ${quality}`, 'info');
+
+      setButtonState('getUrlBtn', true, '🎵 获取链接');
+      document.getElementById('urlResult').style.display = 'none';
+
+      try {
+        const response = await fetchWithTimeout('/api/music/url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source,
+            musicInfo: {
+              songmid: songmid,
+              name: songName,
+              singer: singer
+            },
+            quality
+          })
+        }, 60000);
+
+        log(`📊 收到响应，状态码: ${response.status}`, 'info');
+
+        if (!response.ok) {
+          throw new Error(`HTTP 错误: ${response.status}`);
+        }
+
+        const data = await response.json();
+        log(`📦 响应数据: ${JSON.stringify(data, null, 2)}`, 'info');
+
+        if (data.success) {
+          log('✅ 成功获取音乐链接！', 'success');
+
+          if (typeof data.data === 'string') {
+            showResult('urlResult', true, '获取成功',
+              `<a href="${data.data}" target="_blank">${data.data}</a><br><br>点击链接试听或下载`
+            );
+          } else if (data.data && data.data.url) {
+            showResult('urlResult', true, '获取成功',
+              `<a href="${data.data.url}" target="_blank">${data.data.url}</a><br><br>点击链接试听或下载`
+            );
+          } else {
+            showResult('urlResult', true, '获取成功',
+              `数据: ${JSON.stringify(data.data, null, 2)}`
+            );
+          }
+        } else {
+          log(`❌ 获取链接失败: ${data.error}`, 'error');
+          showResult('urlResult', false, '获取失败',
+            `<strong>错误信息:</strong> ${data.error || '未知错误'}`
+          );
+        }
+
+      } catch (error) {
+        log(`❌ 请求失败: ${error.message}`, 'error');
+        showResult('urlResult', false, '请求失败',
+          `<strong>错误详情:</strong><br>${error.message}`
+        );
+      } finally {
+        setButtonState('getUrlBtn', false, '🎵 获取链接');
+      }
+    }
+
+    // 页面加载完成
+    window.addEventListener('load', () => {
+      log('🎉 页面加载完成', 'success');
+
+      // 绑定回车搜索事件
+      const searchKeyword = document.getElementById('searchKeyword');
+      if (searchKeyword) {
+        searchKeyword.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            searchSong();
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
